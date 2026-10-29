@@ -1,0 +1,9 @@
+{
+  "weights": [0.5, -0.3],
+  "means": [140, 95],
+  "scales": [20, 5],
+  "bias": -1.0,
+  "threshold": 0.5,
+  "features": ["hr_mean", "spo2_mean"],
+  "_note": "DEMO ONLY — placeholder coefficients for prototype demonstration. Replace with real model output."
+}
