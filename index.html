@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NeoGuard Prototype — Neonatal vital sign monitor dashboard for student engineering project. Simulated data only.">
+  <title>NeoGuard Prototype — Neonatal Monitor</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- ═══ PERMANENT WARNING BANNER ═══ -->
+  <div class="banner" role="alert">
+    <span class="banner-icon">⚠</span>
+    Prototype — simulated data — not a medical device — not for clinical use
+  </div>
+
+  <!-- ═══ HEADER ═══ -->
+  <header class="app-header">
+    <div class="header-left">
+      <h1 class="app-title">NeoGuard</h1>
+      <span class="app-subtitle">Neonatal Monitor Prototype</span>
+    </div>
+    <nav class="header-nav" role="navigation" aria-label="Main navigation">
+      <button class="nav-btn nav-btn--active" data-screen="dashboard" id="nav-dashboard">Dashboard</button>
+      <button class="nav-btn" data-screen="system" id="nav-system">System</button>
+      <button class="nav-btn" data-screen="about" id="nav-about">About</button>
+    </nav>
+    <div class="header-right">
+      <div id="connection-indicator" class="connection-status" aria-live="polite">
+        <span class="connection-dot dot-sim"></span>
+        <span class="connection-text">Simulator</span>
+      </div>
+      <button id="theme-toggle" class="icon-btn" title="Toggle dark/light mode" aria-label="Toggle theme">🌙</button>
+      <button id="demo-panel-toggle" class="icon-btn btn-demo-toggle" title="Toggle demo controls">Demo Controls</button>
+    </div>
+  </header>
+
+  <!-- ═══ MAIN LAYOUT ═══ -->
+  <div class="app-layout">
+
+    <!-- ─── DEMO CONTROLS SIDE PANEL ─── -->
+    <aside id="demo-panel" class="demo-panel demo-panel--open" aria-label="Demo Controls">
+      <div class="demo-section">
+        <h3 class="demo-heading">Scenarios</h3>
+        <div class="scenario-grid">
+          <button class="scenario-btn scenario-btn--active" data-scenario="normal">✓ Normal</button>
+          <button class="scenario-btn" data-scenario="high-hr">↑ High HR</button>
+          <button class="scenario-btn" data-scenario="low-spo2">↓ Low SpO2</button>
+          <button class="scenario-btn" data-scenario="fever">🌡 Fever</button>
+          <button class="scenario-btn" data-scenario="motion">〰 Motion Artifact</button>
+          <button class="scenario-btn" data-scenario="disconnect">⊘ Sensor Disconnected</button>
+          <button class="scenario-btn" data-scenario="no-temp">? Temp Sensor Missing</button>
+        </div>
+      </div>
+
+      <div class="demo-section">
+        <h3 class="demo-heading">Speed</h3>
+        <div class="speed-control">
+          <input type="range" id="speed-slider" min="0.5" max="5" step="0.5" value="1" aria-label="Simulation speed">
+          <span id="speed-label" class="speed-value">1×</span>
+        </div>
+        <button id="pause-btn" class="btn btn-secondary">⏸ Pause</button>
+      </div>
+
+      <div class="demo-section">
+        <h3 class="demo-heading">Data Source</h3>
+        <select id="data-source-select" class="select-input" aria-label="Data source">
+          <option value="simulator" selected>Simulator (default)</option>
+          <option value="serial">Serial (Aries v3)</option>
+        </select>
+        <button id="serial-connect-btn" class="btn btn-secondary" disabled>🔌 Connect to Aries</button>
+        <div id="serial-status" class="serial-status">Select "Serial" source first</div>
+      </div>
+
+      <div class="demo-section">
+        <button id="export-csv-btn" class="btn btn-primary btn-full">📥 Export Session CSV</button>
+      </div>
+    </aside>
+
+    <!-- ─── MAIN CONTENT ─── -->
+    <main class="main-content">
+
+      <!-- ════════ DASHBOARD SCREEN ════════ -->
+      <section id="screen-dashboard" class="screen screen--active">
+
+        <!-- VITAL CARDS -->
+        <div class="vitals-grid">
+
+          <!-- Heart Rate -->
+          <div class="vital-card vital-card--hr" id="card-hr">
+            <div class="vital-header">
+              <span class="vital-label">Heart Rate</span>
+              <span class="sim-tag" style="display:inline">SIMULATED</span>
+            </div>
+            <div class="vital-body">
+              <div class="vital-value-group">
+                <span class="vital-value">—</span>
+                <span class="vital-unit">bpm</span>
+              </div>
+              <span class="vital-status status-chip status-valid">● Valid</span>
+            </div>
+            <div class="sparkline-container">
+              <canvas class="sparkline-canvas" aria-label="Heart rate sparkline"></canvas>
+            </div>
+          </div>
+
+          <!-- SpO2 -->
+          <div class="vital-card vital-card--spo2" id="card-spo2">
+            <div class="vital-header">
+              <span class="vital-label">SpO2</span>
+              <span class="sim-tag" style="display:inline">SIMULATED</span>
+            </div>
+            <div class="vital-body">
+              <div class="vital-value-group">
+                <span class="vital-value">—</span>
+                <span class="vital-unit">%</span>
+              </div>
+              <span class="vital-status status-chip status-valid">● Valid</span>
+            </div>
+            <div class="sparkline-container">
+              <canvas class="sparkline-canvas" aria-label="SpO2 sparkline"></canvas>
+            </div>
+          </div>
+
+          <!-- Temperature -->
+          <div class="vital-card vital-card--temp" id="card-temp">
+            <div class="vital-header">
+              <span class="vital-label">Temperature</span>
+              <span class="sim-tag" style="display:inline">SIMULATED</span>
+            </div>
+            <div class="vital-body">
+              <div class="vital-value-group">
+                <span class="vital-value">—</span>
+                <span class="vital-unit">°C</span>
+              </div>
+              <span class="vital-status status-chip status-valid">● Valid</span>
+            </div>
+            <div class="vital-pending" style="display:none">
+              Sensor pending (MLX90614)
+            </div>
+            <div class="sparkline-container">
+              <canvas class="sparkline-canvas" aria-label="Temperature sparkline"></canvas>
+            </div>
+          </div>
+
+          <!-- Motion -->
+          <div class="vital-card vital-card--motion" id="card-motion">
+            <div class="vital-header">
+              <span class="vital-label">Motion</span>
+              <span class="sim-tag" style="display:inline">SIMULATED</span>
+            </div>
+            <div class="vital-body">
+              <div class="vital-value-group">
+                <span class="vital-value">—</span>
+                <span class="vital-unit">level</span>
+              </div>
+              <span class="vital-status status-chip status-valid">● Valid</span>
+            </div>
+            <div class="sparkline-container">
+              <canvas class="sparkline-canvas" aria-label="Motion sparkline"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- LIVE CHARTS -->
+        <div class="charts-row">
+          <div class="chart-container" id="chart-hr-container">
+            <div class="chart-header">
+              <h3>Heart Rate (last ~5 min)</h3>
+              <span class="sim-tag">SIMULATED</span>
+            </div>
+            <canvas id="chart-hr-canvas" aria-label="Heart rate trend chart"></canvas>
+          </div>
+          <div class="chart-container" id="chart-spo2-container">
+            <div class="chart-header">
+              <h3>SpO2 (last ~5 min)</h3>
+              <span class="sim-tag">SIMULATED</span>
+            </div>
+            <canvas id="chart-spo2-canvas" aria-label="SpO2 trend chart"></canvas>
+          </div>
+        </div>
+
+        <!-- BOTTOM ROW: Severity + ML + Alerts -->
+        <div class="bottom-row">
+
+          <!-- Severity Index -->
+          <div class="severity-container">
+            <div class="section-header">
+              <h3>Composite Severity Index</h3>
+              <span class="config-badge" title="All thresholds from config.js — DEMO ONLY">⚙ Config values</span>
+            </div>
+            <div class="severity-gauge-wrap">
+              <canvas id="severity-gauge-canvas" aria-label="Severity gauge"></canvas>
+            </div>
+            <div id="severity-category-label" class="severity-category">—</div>
+            <div id="severity-note" class="severity-note" style="display:none"></div>
+            <div id="severity-inputs-used" class="severity-inputs">Waiting for data…</div>
+
+            <div class="severity-breakdown-header">
+              <h4>Why this score</h4>
+              <span class="breakdown-legend">Deviation × Weight contribution</span>
+            </div>
+            <div id="score-breakdown" class="score-breakdown">
+              <!-- Populated by JS -->
+            </div>
+
+            <div class="config-display">
+              <details>
+                <summary>View config thresholds (demo values)</summary>
+                <table class="config-table">
+                  <thead>
+                    <tr><th>Vital</th><th>Normal Range</th><th>Critical Dist.</th><th>Weight</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>HR</td><td>120–160 bpm</td><td>40</td><td>30</td></tr>
+                    <tr><td>SpO2</td><td>90–100 %</td><td>10</td><td>40</td></tr>
+                    <tr><td>Temp</td><td>36.5–37.5 °C</td><td>2</td><td>20</td></tr>
+                    <tr><td>Motion</td><td>0–100 level</td><td>—</td><td>10</td></tr>
+                  </tbody>
+                </table>
+                <p class="config-note">⚠ PLACEHOLDER VALUES FOR DEMO ONLY — to be set with qualified clinical guidance</p>
+                <table class="config-table">
+                  <thead><tr><th>Category</th><th>Score Range</th></tr></thead>
+                  <tbody>
+                    <tr><td>● Stable</td><td>0 – 30</td></tr>
+                    <tr><td>▲ Watch</td><td>30 – 60</td></tr>
+                    <tr><td>◆ Alert</td><td>60 – 100</td></tr>
+                  </tbody>
+                </table>
+              </details>
+            </div>
+          </div>
+
+          <!-- ML Risk Card -->
+          <div class="ml-card" id="ml-card">
+            <div class="section-header">
+              <h3>ML Risk Estimate</h3>
+              <span class="ml-tag ml-tag--simulated">SIMULATED</span>
+            </div>
+            <div class="ml-probability-wrap">
+              <span class="ml-probability">—</span>
+            </div>
+            <div class="ml-status-text">Loading model…</div>
+            <div class="ml-note">
+              <strong>Note:</strong> This card does NOT influence the Composite Severity Index.
+              It shows a separate placeholder probability from a logistic regression model.
+            </div>
+            <div class="ml-note">
+              Trained on PreMo (very-low-birth-weight NICU data) — not validated on MAX30102 signals.
+            </div>
+            <div class="ml-note ml-note--small">
+              To load real coefficients: place a <code>model.json</code> file with
+              <code>{weights, means, scales, bias, threshold}</code> in the project root and refresh.
+            </div>
+          </div>
+
+          <!-- Alert Log -->
+          <div class="alert-section">
+            <div class="section-header">
+              <h3>Alert Log</h3>
+              <button id="clear-alerts-btn" class="btn btn-small">Clear</button>
+            </div>
+            <div id="alert-list" class="alert-list" aria-live="polite" aria-label="Alert log">
+              <div class="alert-empty">No alerts</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════ SYSTEM SCREEN ════════ -->
+      <section id="screen-system" class="screen" hidden>
+        <div class="page-content">
+          <h2>System Architecture</h2>
+          <p class="page-subtitle">NeoGuard Prototype — RISC-V Neonatal Multi-Parameter Vital Sign Monitor</p>
+
+          <!-- Architecture Diagram -->
+          <div class="architecture-diagram" aria-label="System architecture diagram">
+            <div class="arch-row">
+              <div class="arch-group arch-sensors">
+                <h4>Sensors</h4>
+                <div class="arch-box arch-box--active">
+                  <div class="arch-box-title">MAX30102</div>
+                  <div class="arch-box-detail">HR + SpO2</div>
+                  <span class="arch-status arch-status--ok">✓ Tested</span>
+                </div>
+                <div class="arch-box arch-box--active">
+                  <div class="arch-box-title">Accelerometer</div>
+                  <div class="arch-box-detail">Motion detection</div>
+                  <span class="arch-status arch-status--ok">✓ Tested</span>
+                </div>
+                <div class="arch-box arch-box--pending">
+                  <div class="arch-box-title">MLX90614</div>
+                  <div class="arch-box-detail">Temperature (IR)</div>
+                  <span class="arch-status arch-status--pending">◌ Pending</span>
+                </div>
+              </div>
+
+              <div class="arch-arrow">
+                <div class="arch-arrow-line"></div>
+                <div class="arch-arrow-label">I²C Bus</div>
+              </div>
+
+              <div class="arch-group arch-processor">
+                <h4>Processor</h4>
+                <div class="arch-box arch-box--primary">
+                  <div class="arch-box-title">Aries v3</div>
+                  <div class="arch-box-detail">RISC-V SoC</div>
+                  <span class="arch-status arch-status--ok">✓ Active</span>
+                </div>
+              </div>
+
+              <div class="arch-arrow">
+                <div class="arch-arrow-line"></div>
+                <div class="arch-arrow-label">USB Serial</div>
+              </div>
+
+              <div class="arch-group arch-software">
+                <h4>Software</h4>
+                <div class="arch-box arch-box--active">
+                  <div class="arch-box-title">Signal Processing</div>
+                  <div class="arch-box-detail">Filtering + Quality</div>
+                </div>
+                <div class="arch-box arch-box--active">
+                  <div class="arch-box-title">Severity Index</div>
+                  <div class="arch-box-detail">Weighted composite</div>
+                </div>
+                <div class="arch-box arch-box--active">
+                  <div class="arch-box-title">Alert Engine</div>
+                  <div class="arch-box-detail">Threshold monitoring</div>
+                </div>
+              </div>
+
+              <div class="arch-arrow">
+                <div class="arch-arrow-line"></div>
+                <div class="arch-arrow-label">Display</div>
+              </div>
+
+              <div class="arch-group arch-output">
+                <h4>Output</h4>
+                <div class="arch-box arch-box--active">
+                  <div class="arch-box-title">Web Dashboard</div>
+                  <div class="arch-box-detail">This interface</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Project Status Checklist -->
+          <h3>Project Status Checklist</h3>
+          <div class="status-checklist">
+            <div class="checklist-item checklist-done">
+              <span class="checklist-icon">✅</span>
+              <span>MAX30102 sensor — individually tested, HR and SpO2 readings confirmed</span>
+            </div>
+            <div class="checklist-item checklist-done">
+              <span class="checklist-icon">✅</span>
+              <span>Motion/accelerometer sensor — individually tested</span>
+            </div>
+            <div class="checklist-item checklist-done">
+              <span class="checklist-icon">✅</span>
+              <span>Aries v3 RISC-V board — serial communication tested</span>
+            </div>
+            <div class="checklist-item checklist-done">
+              <span class="checklist-icon">✅</span>
+              <span>Web dashboard — functional with simulated data</span>
+            </div>
+            <div class="checklist-item checklist-done">
+              <span class="checklist-icon">✅</span>
+              <span>Composite Severity Index — implemented with placeholder thresholds</span>
+            </div>
+            <div class="checklist-item checklist-progress">
+              <span class="checklist-icon">🔄</span>
+              <span>Sensor integration — in progress (individual sensors working, full I²C bus integration ongoing)</span>
+            </div>
+            <div class="checklist-item checklist-pending">
+              <span class="checklist-icon">⏳</span>
+              <span>MLX90614 temperature sensor — hardware acquired, integration pending</span>
+            </div>
+            <div class="checklist-item checklist-progress">
+              <span class="checklist-icon">🔄</span>
+              <span>ML risk model — trained on public PreMo dataset (not validated on live MAX30102 signals)</span>
+            </div>
+            <div class="checklist-item checklist-pending">
+              <span class="checklist-icon">⏳</span>
+              <span>Clinical validation — not started (requires qualified clinical guidance and ethics approval)</span>
+            </div>
+            <div class="checklist-item checklist-pending">
+              <span class="checklist-icon">⏳</span>
+              <span>Regulatory compliance — not applicable at prototype stage</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════ ABOUT / LIMITATIONS SCREEN ════════ -->
+      <section id="screen-about" class="screen" hidden>
+        <div class="page-content">
+          <h2>About NeoGuard Prototype</h2>
+
+          <div class="about-card">
+            <h3>Intended Use</h3>
+            <p>NeoGuard is a <strong>student engineering project prototype</strong> for a neonatal multi-parameter
+            vital sign monitor designed for <strong>resource-limited, offline-capable</strong> environments.</p>
+            <p>The system aims to demonstrate the feasibility of using low-cost sensors (MAX30102 for pulse
+            oximetry, MLX90614 for contactless temperature) connected to a RISC-V processor (Aries v3)
+            to compute a composite severity indicator for neonatal monitoring.</p>
+            <p><strong>This prototype runs on simulated data and is intended solely for academic
+            demonstration and engineering evaluation.</strong></p>
+          </div>
+
+          <div class="about-card about-card--warning">
+            <h3>⚠ Limitations</h3>
+            <ul class="limitations-list">
+              <li><strong>Not a medical device.</strong> This prototype has not undergone any regulatory review, certification, or approval process.</li>
+              <li><strong>Not clinically validated.</strong> All thresholds, weights, and severity cut-offs are placeholder values chosen for demonstration. They are not based on clinical evidence.</li>
+              <li><strong>Simulated data only.</strong> The dashboard currently displays simulated vital signs. The serial connection feature is experimental.</li>
+              <li><strong>ML model not validated.</strong> The risk estimation model was trained on public datasets (PreMo, very-low-birth-weight NICU data) and has not been validated against signals from the MAX30102 sensor or any clinical cohort.</li>
+              <li><strong>Sensor limitations.</strong> Consumer-grade sensors like the MAX30102 are not equivalent to medical-grade pulse oximeters. Motion artifacts significantly degrade signal quality.</li>
+              <li><strong>Temperature sensor pending.</strong> The MLX90614 infrared temperature sensor has not yet been integrated.</li>
+              <li><strong>No alarm validation.</strong> Alert thresholds are placeholders and have not been validated for sensitivity or specificity.</li>
+            </ul>
+          </div>
+
+          <div class="about-card about-card--ethics">
+            <h3>Ethics & Clinical Responsibility</h3>
+            <p>Before this system could be used in any capacity with real patients, the following would be required:</p>
+            <ul>
+              <li>Clinical validation studies with appropriate patient populations</li>
+              <li>Ethics committee / IRB approval for any studies involving patients</li>
+              <li>Regulatory approval (e.g. CE marking, FDA clearance) as a medical device</li>
+              <li>Threshold calibration with qualified neonatologists and clinical evidence</li>
+              <li>Extensive reliability and safety testing</li>
+              <li>Proper biomedical engineering oversight and quality management systems</li>
+            </ul>
+            <p><strong>The severity score indicates a potentially concerning pattern based on demo thresholds.
+            It is not a diagnosis and must never be used as the sole basis for clinical decisions.</strong></p>
+          </div>
+
+          <div class="about-card">
+            <h3>Project Information</h3>
+            <table class="info-table">
+              <tr><td>Project Type</td><td>Student Engineering Project</td></tr>
+              <tr><td>Processor</td><td>VEGA Aries v3 (RISC-V)</td></tr>
+              <tr><td>SpO2/HR Sensor</td><td>MAX30102</td></tr>
+              <tr><td>Temperature Sensor</td><td>MLX90614 (pending integration)</td></tr>
+              <tr><td>Communication</td><td>I²C (sensors), USB Serial (to host)</td></tr>
+              <tr><td>Dashboard</td><td>Offline HTML/CSS/JS — no backend required</td></tr>
+              <tr><td>ML Dataset</td><td>PreMo (public, very-low-birth-weight NICU)</td></tr>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ═══ SCRIPTS (load order matters) ═══ -->
+  <script src="js/config.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/severity.js"></script>
+  <script src="js/simulator.js"></script>
+  <script src="js/serial.js"></script>
+  <script src="js/ml-risk.js"></script>
+  <script src="js/alerts.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/tests.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
